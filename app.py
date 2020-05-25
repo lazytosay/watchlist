@@ -1,7 +1,38 @@
 from flask import Flask, render_template
+from flask_sqlalchemy import SQLAlchemy
 from flask import url_for
+import os
+import sys
+
 app = Flask(__name__)
 
+#dealing with the database part
+WIN = sys.platform.startswith("win")
+if WIN:
+    prefix = 'sqlite:///'
+else:
+    prefix = 'sqlite:////'
+
+app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(app.root_path, 'data.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+#table name will be user (lower case)
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+
+class Movie(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(60))
+    year = db.Column(db.String(4))
+
+
+
+
+
+#FIXME: temp data to make sure template works
 name = "Bill"
 movies = [
     {'title': 'My Neighbor Totoro', 'year':'1988'},
