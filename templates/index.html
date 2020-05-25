@@ -3,17 +3,23 @@
     <head>
         <meta charset="utf-8">
         <title> {{name}}'s Watchlist</title>
+        <link rel="icon" href="{{ url_for('static', filename='images/cat.png') }}" >
+        <link rel="stylesheet" href="{{url_for('static', filename='style.css') }} " type="text/css">
     </head>
 
     <body>
-        <h2>{{name}}'s Watchlist</h2>
+        <h2>
+            <img alt="Avatar" class="avatar" src="{{url_for('static', filename='images/avatar.png') }} ">
+            {{name}}'s Watchlist</h2>
         {#using length to filter the length of the movie#}
         <p>{{ movies|length}} Titles</p>
-        <ul>{%for movie in movies%}
+        <ul class="movie-list">{%for movie in movies%}
             {#same as movie['title'] #}
             <li>{{movie.title}} - {{movie.year}}</li>
         {% endfor %}
         </ul>
+
+        <img alt="walking totoro" class="totoro" src="{{url_for('static', filename='images/totoro.gif') }}">
         <footer>
             <small>@copy; 2020 <a href="https://www.google.com">GOOGLE</a></small>
         </footer>
