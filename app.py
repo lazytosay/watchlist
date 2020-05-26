@@ -2,12 +2,16 @@ from flask import Flask, render_template
 from flask import request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask import url_for
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
 import os
 import sys
 import click
 
 app = Flask(__name__)
 app.secret_key = "dev"
+
+login_manager = LoginManager(app)
 
 #dealing with the database part
 WIN = sys.platform.startswith("win")
@@ -22,9 +26,18 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 #table name will be user (lower case)
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
+
+    username = db.Column(db.String(20))
+    password_hash = db.Column(db.String(128))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def validate_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -40,8 +53,9 @@ def initdb(drop):
     if drop:
         click.echo("dropping..")
         db.drop_all()
-    db.create_all()
-    click.echo('Initialized database.')
+    else:
+        db.create_all()
+        click.echo('Initialized database.')
 
 @app.cli.command()
 def forge():
@@ -71,6 +85,68 @@ def forge():
     click.echo("Done..generated fake data")
 
 
+@app.cli.command()
+@click.option('--username', prompt=True, help='The userName used to login')
+@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='The password used to login')
+def admin(username, password):
+    db.create_all()
+
+    user = User.query.first()
+    if user is not None:
+        click.echo("updating user...")
+        user.username = username
+        user.set_password(password)
+    else:
+        click.echo("Creating user...")
+        user = User(username=username, name='Admin')
+        user.set_password(password)
+        db.session.add(user)
+    db.session.commit()
+    click.echo("Done.")
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = User.query.get(int(user_id))
+    return user
+
+
+
+
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        if not username or not password:
+            flash("Invalid input..")
+            return redirect(url_for('login'))
+        else:
+            user = User.query.first()
+            if username == user.username and user.validate_password(password):
+                login_user(user)
+                flash('Login Success..')
+                return redirect(url_for('index'))
+            else:
+                flash('Invalid username or password')
+                return redirect(url_for('login'))
+    else:
+        return render_template('login.html')
+
+
+@app.route('/login')
+@login_required
+def logout():
+    #logout
+    logout_user()
+    flash("Goodybye.")
+    return redirect(url_for('index'))
+
+
+
 @app.context_processor
 def inject_user():
     user = User.query.first()
@@ -94,6 +170,35 @@ def index():
             db.session.commit()
             flash('Item Created.')
             return redirect(url_for('index'))
+
+
+@app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
+def edit(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+
+    if request.method == 'POST':
+        title = request.form['title']
+        year = request.form['year']
+        if not title or not year or len(year) > 4 or len(title) > 60:
+            flash("Invalid Input..")
+            return redirect(url_for('edit', movie_id=movie_id))
+        else:
+            movie.title = title
+            movie.year = year
+            db.session.commit()
+            flash("Item Updated..")
+            return redirect(url_for('index'))
+
+    return render_template('edit.html', movie=movie)
+
+
+@app.route('/movie/delete/<int:movie_id>', methods=['POST'])
+def delete(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    flash("Item deleted..")
+    return redirect(url_for('index'))
 
 
 @app.errorhandler(404)
