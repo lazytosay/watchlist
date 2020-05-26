@@ -3,7 +3,7 @@ from flask import request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask import url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import os
 import sys
 import click
@@ -12,6 +12,7 @@ app = Flask(__name__)
 app.secret_key = "dev"
 
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
 #dealing with the database part
 WIN = sys.platform.startswith("win")
@@ -137,7 +138,7 @@ def login():
         return render_template('login.html')
 
 
-@app.route('/login')
+@app.route('/logout')
 @login_required
 def logout():
     #logout
@@ -159,6 +160,11 @@ def index():
         movies = Movie.query.all()
         return render_template('index.html', movies=movies)
     elif request.method == 'POST':
+        #require login to operate
+        if not current_user.is_authenticated:
+            flash("please login...")
+            return redirect(url_for('index'))
+
         title = request.form.get('title')
         year = request.form.get('year')
         if not title or not year or len(year) > 4 or len(title) > 60:
@@ -173,6 +179,7 @@ def index():
 
 
 @app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
+@login_required
 def edit(movie_id):
     movie = Movie.query.get_or_404(movie_id)
 
@@ -193,12 +200,33 @@ def edit(movie_id):
 
 
 @app.route('/movie/delete/<int:movie_id>', methods=['POST'])
+@login_required
 def delete(movie_id):
     movie = Movie.query.get_or_404(movie_id)
     db.session.delete(movie)
     db.session.commit()
     flash("Item deleted..")
     return redirect(url_for('index'))
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    if request.method == 'POST':
+        name = request.form['name']
+        if not name or len(name) > 20:
+            flash("Invalid Input...")
+            return redirect(url_for('settings'))
+        else:
+            current_user.name = name
+            #user = User.query.first()
+            #user.name = name
+            db.session.commit()
+            flash('Settings Updated..')
+            return redirect(url_for('index'))
+    else:
+        return render_template('settings.html')
+
 
 
 @app.errorhandler(404)

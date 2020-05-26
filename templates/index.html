@@ -2,14 +2,16 @@
         {%block content%}
         <p>{{ movies|length}} Titles</p>
 
-        <form method="post">
-            <label for="title">Title</label>
-                <input type="text" name="title" id="title" autocomplete="off" required>
+        {% if current_user.is_authenticated %}
+            <form method="post">
+                <label for="title">Title</label>
+                    <input type="text" name="title" id="title" autocomplete="off" required>
 
-            <label for="year">Year</label>
-                <input type="text" name="year" id="year" autocomplete="off" required>
-            <input class="btn" type="submit" name="submit" value="Add">
-        </form>
+                <label for="year">Year</label>
+                    <input type="text" name="year" id="year" autocomplete="off" required>
+                <input class="btn" type="submit" name="submit" value="Add">
+            </form>
+        {% endif %}
 
         <ul class="movie-list">
             {%for movie in movies%}
@@ -17,10 +19,13 @@
                 <li>
                     {{movie.title}} - {{movie.year}}
                     <span class="float-right">
-                        <a class="btn" href="{{url_for('edit', movie_id=movie.id) }}">Edit</a>
-                        <form class="inline-form" method="post" action="{{url_for('delete', movie_id=movie.id) }}">
-                            <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
-                        </form>
+
+                        {% if current_user.is_authenticated %}
+                            <a class="btn" href="{{url_for('edit', movie_id=movie.id) }}">Edit</a>
+                            <form class="inline-form" method="post" action="{{url_for('delete', movie_id=movie.id) }}">
+                                <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
+                            </form>
+                        {% endif %}
                         <a class="imdb" href="https://www.imdb.com/find?q={{movie.title}}" target="_blank" title="Find this movie on IMDB">IMDB</a>
                     </span>
                 </li>
