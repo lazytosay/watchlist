@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+from flask import request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask import url_for
 import os
@@ -6,6 +7,7 @@ import sys
 import click
 
 app = Flask(__name__)
+app.secret_key = "dev"
 
 #dealing with the database part
 WIN = sys.platform.startswith("win")
@@ -74,12 +76,25 @@ def inject_user():
     user = User.query.first()
     return dict(user=user)
 
-@app.route('/')
-@app.route('/about')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    user = User.query.first()
-    movies = Movie.query.all()
-    return render_template('index.html', movies=movies)
+    if request.method == 'GET':
+        user = User.query.first()
+        movies = Movie.query.all()
+        return render_template('index.html', movies=movies)
+    elif request.method == 'POST':
+        title = request.form.get('title')
+        year = request.form.get('year')
+        if not title or not year or len(year) > 4 or len(title) > 60:
+            flash('Invalid Input...')
+            return redirect(url_for('index'))
+        else:
+            movie = Movie(title=title, year=year)
+            db.session.add(movie)
+            db.session.commit()
+            flash('Item Created.')
+            return redirect(url_for('index'))
+
 
 @app.errorhandler(404)
 def page_not_found(e):
