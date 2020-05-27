@@ -94,7 +94,7 @@ def admin(username, password):
 
     user = User.query.first()
     if user is not None:
-        click.echo("updating user...")
+        click.echo("Updating user...")
         user.username = username
         user.set_password(password)
     else:
@@ -123,16 +123,16 @@ def login():
         password = request.form['password']
 
         if not username or not password:
-            flash("Invalid input..")
+            flash("Invalid Input.")
             return redirect(url_for('login'))
         else:
             user = User.query.first()
             if username == user.username and user.validate_password(password):
                 login_user(user)
-                flash('Login Success..')
+                flash('Login Success.')
                 return redirect(url_for('index'))
             else:
-                flash('Invalid username or password')
+                flash('Invalid username or password.')
                 return redirect(url_for('login'))
     else:
         return render_template('login.html')
@@ -143,7 +143,7 @@ def login():
 def logout():
     #logout
     logout_user()
-    flash("Goodybye.")
+    flash("Goodbye.")
     return redirect(url_for('index'))
 
 
@@ -168,7 +168,7 @@ def index():
         title = request.form.get('title')
         year = request.form.get('year')
         if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('Invalid Input...')
+            flash('Invalid Input.')
             return redirect(url_for('index'))
         else:
             movie = Movie(title=title, year=year)
@@ -187,13 +187,13 @@ def edit(movie_id):
         title = request.form['title']
         year = request.form['year']
         if not title or not year or len(year) > 4 or len(title) > 60:
-            flash("Invalid Input..")
+            flash("Invalid Input.")
             return redirect(url_for('edit', movie_id=movie_id))
         else:
             movie.title = title
             movie.year = year
             db.session.commit()
-            flash("Item Updated..")
+            flash("Item Updated.")
             return redirect(url_for('index'))
 
     return render_template('edit.html', movie=movie)
@@ -205,7 +205,7 @@ def delete(movie_id):
     movie = Movie.query.get_or_404(movie_id)
     db.session.delete(movie)
     db.session.commit()
-    flash("Item deleted..")
+    flash("Item deleted.")
     return redirect(url_for('index'))
 
 
@@ -215,14 +215,14 @@ def settings():
     if request.method == 'POST':
         name = request.form['name']
         if not name or len(name) > 20:
-            flash("Invalid Input...")
+            flash("Invalid Input.")
             return redirect(url_for('settings'))
         else:
             current_user.name = name
             #user = User.query.first()
             #user.name = name
             db.session.commit()
-            flash('Settings Updated..')
+            flash('Settings Updated.')
             return redirect(url_for('index'))
     else:
         return render_template('settings.html')
