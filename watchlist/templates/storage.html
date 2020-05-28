@@ -2,29 +2,40 @@
 
 
 {% block content %}
-
     {% if current_user.is_authenticated %}
-    <form method="post">
-        <label for="title">Title</label>
-        <input type="text" name="title" id="title" autocomplete="off" required>
+    <br>
+    <form method="post" enctype="multipart/form-data" >
+        <label for="file">Upload</label>
+            <input type="file" name="file" id="file" autocomplete="off" required>
+        <input class="btn" type="submit" name="submit" value="Upload">
 
-        <label for="year">Year</label>
-        <input type="text" name="year" id="year" autocomplete="off" required>
-        <input class="btn" type="submit" name="submit" value="Add">
+        <span class="float-right">
+        {% set spaceLeft = storage.available * 100/ storage.total %}
+        Space Left: ({{'%0.5f' % spaceLeft| float }}%)
+    </span>
     </form>
+
+
     {% endif %}
 
-    {% for f in files %}
-        <li>
-            {{f.name}} - {{f.size}}
-            <span class="float-right">
+    <ul class="movie-list">
+        {% for f in files %}
+            <li>
+                {{f.name}}
+                <span class="float-right">
 
-                {% if current_user.is_authenticated %}
-                TIME: NA
-                {% endif %}
-            </span>
-        </li>
+                    {% if current_user.is_authenticated %}
 
-    {% endfor %}
+                        <form class="inline-form" method="post" action="{{url_for('delete_file', file_id=f.id) }}">
+                            <input class="btn" type="submit" name="deletefile" value="DeleteFile" onclick="return confirm('Are you sure?')">
+                        </form>
+                    {% set percentage = f.size * 100 / storage.total %}
+                    ({{'%0.2f' % percentage | float }}%)
+                    {% endif %}
+                </span>
+            </li>
+
+        {% endfor %}
+    </ul>
 
 {% endblock %}

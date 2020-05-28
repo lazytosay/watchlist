@@ -27,4 +27,10 @@ class Movie(db.Model):
 class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(60))
-    size = db.Coumn(db.String(10))
+    size = db.Column(db.Integer)
+
+class Storage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    total = db.Column(db.Integer)
+    taken = db.Column(db.Integer)
+    available = db.Column(db.Integer)

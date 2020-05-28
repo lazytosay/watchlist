@@ -1,6 +1,6 @@
 import click
 from watchlist import app, db
-from watchlist.models import User, Movie
+from watchlist.models import User, Movie, File
 
 #register as command in the cmd
 @app.cli.command()

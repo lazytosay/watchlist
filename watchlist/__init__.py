@@ -20,6 +20,12 @@ else:
 app.config['SQLALCHEMY_DATABASE_URI'] = prefix + os.path.join(os.path.dirname(app.root_path), os.getenv('DATABASE_FILE','data.db'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+#for upload files
+UPLOAD_FOLDER = os.path.join(app.root_path, 'storage')
+print(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 
@@ -36,5 +42,16 @@ def inject_user():
     from watchlist.models import User
     user = User.query.first()
     return dict(user=user)
+
+
+@app.context_processor
+def inject_storage_info():
+    from watchlist.models import Storage
+    storage = Storage.query.first()
+    if not storage:
+        storage = Storage(total=300*1024*1024, available=200*1024*1024, taken=0)
+        db.session.add(storage)
+        db.session.commit()
+    return dict(storage=storage)
 
 from watchlist import views, errors, commands

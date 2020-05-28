@@ -4,8 +4,9 @@ from flask import request, redirect, flash
 from flask import url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from watchlist import app, db
-from watchlist.models import User, Movie, File
-
+from watchlist.models import User, Movie, File, Storage
+from werkzeug.utils import secure_filename
+import os
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -114,11 +115,87 @@ def settings():
     else:
         return render_template('settings.html')
 
+
+ALLOWED_EXTENSIONS= {'txt', 'pdf', 'mobi', 'docx', 'zip', 'png', 'jpg', 'jpeg', 'gif', 'mp4'}
+#helper function for uploading..
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route('/Storage', methods=['GET', 'POST'])
 @login_required
 def storage():
     if request.method == 'POST':
-        print('hi')
-    else:
-        files = File.query.all()
-        return render_template('storage.html', files=files)
+        storage = Storage.query.first()
+        #check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part.')
+            return redirect(url_for(storage))
+        else:
+            file = request.files['file']
+            if file.filename == '':
+                flash('No selected file.')
+                return redirect(url_for(storage))
+
+            #if file is selected and it is the allowed type
+            elif file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+
+                #determine the size
+                file.seek(0, os.SEEK_END)
+                size = file.tell()
+                #check if the storage is enough
+                if storage.available < size:
+                    flash("Not enough storage available.")
+                    return redirect(url_for('storage'))
+
+                #make sure it doesn't repeat..
+                fileToSave = File(name=filename, size=size)
+                repeat = db.session.query(File).filter_by(name=filename, size=size).all()
+
+                if not repeat:
+                    #update change to the database
+                    db.session.add(fileToSave)
+                    storage.available -= size
+                    storage.taken += size
+
+                    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                        os.mkdir(app.config['UPLOAD_FOLDER'])
+
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+                    #if save cause error, then will not update the change
+                    db.session.commit()
+
+                    flash("Added new file.")
+                else:
+                    flash("File already exist.")
+            else:
+                flash("Your file type is not supported yet.")
+
+
+    files = File.query.all()
+    return render_template('storage.html', files=files)
+
+
+@app.route('/movie/deletefile/<int:file_id>', methods=['POST'])
+@login_required
+def delete_file(file_id):
+    file = File.query.get_or_404(file_id)
+    filename = file.name
+
+    storage = Storage.query.first()
+    storage.available += file.size
+    storage.taken -= file.size
+
+    #delete from the database
+    db.session.delete(file)
+
+    #save the change
+    db.session.commit()
+
+    #delete it physically
+    os.unlink(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+
+    flash("File deleted.")
+    return redirect(url_for('storage'))
