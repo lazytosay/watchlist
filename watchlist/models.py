@@ -24,3 +24,7 @@ class Movie(db.Model):
     year = db.Column(db.String(4))
 
 
+class File(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(60))
+    size = db.Coumn(db.String(10))

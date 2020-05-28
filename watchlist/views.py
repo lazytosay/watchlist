@@ -4,7 +4,7 @@ from flask import request, redirect, flash
 from flask import url_for
 from flask_login import login_user, login_required, logout_user, current_user
 from watchlist import app, db
-from watchlist.models import User, Movie
+from watchlist.models import User, Movie, File
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -113,3 +113,12 @@ def settings():
             return redirect(url_for('index'))
     else:
         return render_template('settings.html')
+
+@app.route('/Storage', methods=['GET', 'POST'])
+@login_required
+def storage():
+    if request.method == 'POST':
+        print('hi')
+    else:
+        files = File.query.all()
+        return render_template('storage.html', files=files)

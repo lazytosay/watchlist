@@ -1,0 +1,30 @@
+{% extends 'base.html'%}
+
+
+{% block content %}
+
+    {% if current_user.is_authenticated %}
+    <form method="post">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" autocomplete="off" required>
+
+        <label for="year">Year</label>
+        <input type="text" name="year" id="year" autocomplete="off" required>
+        <input class="btn" type="submit" name="submit" value="Add">
+    </form>
+    {% endif %}
+
+    {% for f in files %}
+        <li>
+            {{f.name}} - {{f.size}}
+            <span class="float-right">
+
+                {% if current_user.is_authenticated %}
+                TIME: NA
+                {% endif %}
+            </span>
+        </li>
+
+    {% endfor %}
+
+{% endblock %}
