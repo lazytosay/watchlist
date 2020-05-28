@@ -19,7 +19,7 @@ def forge():
     #generate fake data
     db.create_all()
 
-    name = 'bill'
+    #name = 'bill'
     movies = [
         {'title': 'My Neighbor Totoro', 'year': '1988'},
         {'title': 'Dead Poets Society', 'year': '1989'},
@@ -33,8 +33,8 @@ def forge():
         {'title': 'The Pork of Music', 'year': '2012'},
     ]
 
-    user = User(name=name)
-    db.session.add(user)
+    #user = User(name=name)
+    #db.session.add(user)
     for m in movies:
         movie = Movie(title=m['title'], year=m['year'])
         db.session.add(movie)
