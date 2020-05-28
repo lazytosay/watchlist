@@ -49,7 +49,7 @@ def inject_storage_info():
     from watchlist.models import Storage
     storage = Storage.query.first()
     if not storage:
-        storage = Storage(total=300*1024*1024, available=200*1024*1024, taken=0)
+        storage = Storage(total=300*1024*1024, available=300*1024*1024, taken=0)
         db.session.add(storage)
         db.session.commit()
     return dict(storage=storage)
